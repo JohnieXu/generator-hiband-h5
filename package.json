@@ -6,8 +6,22 @@
     "generators"
   ],
   "keywords": [
-    "yeoman-generator"
+    "yeoman-generator",
+    "h5"
   ],
+  "author": "JohnieXu",
+  "license": "MIT",
+  "engines": {
+    "node": ">=8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JohnieXu/generator-hiband-h5.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JohnieXu/generator-hiband-h5/issues"
+  },
+  "homepage": "https://github.com/JohnieXu/generator-hiband-h5#readme",
   "dependencies": {
     "simple-git": "^1.113.0",
     "yeoman-generator": "^4.0.1"
