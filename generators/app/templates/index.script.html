@@ -1,0 +1,155 @@
+<!-- split stop -->
+<!DOCTYPE html>
+<html lang="zh_CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title><%= title %></title>
+        <link href="https://cdn.bootcss.com/twitter-bootstrap/3.4.1/css/bootstrap.css" rel="stylesheet">
+    </head>
+    <body style="-webkit-overflow-scrolling: touch;">
+        <!-- split index.html -->
+        <style>
+          /* 这里是样式内容 */
+        </style>
+        <div style="margin: 0; padding: 5vw 1vw; width: 100%; height: 100vh; background: rgb(255,255,255); overflow-x: hidden; -webkit-overflow-scrolling: touch;">
+            <!-- 这里是页面内容 -->
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function handleContentLoad() {
+                document.removeEventListener('DOMContentLoaded', handleContentLoad);
+                var $table = $('#table');
+
+                window.isWeb = true // 当前环境是否web环境
+                window.mode = 'test' // test：测试站 prod：正式站
+                window.recordUrl = {
+                    test: 'http://api.card.xyk51.cn/v1' + '/zhixin/record',
+                    prod: 'https://api.card.foreverhappy.cn/v1' + '/zhixin/record'
+                } // 获取用户基本信息接口地址
+
+                var loginInfo = {
+                    'partner':'',
+                    'token': '',
+                    'userName': undefined
+                }
+
+                function queryString(url){
+                    var result = {},
+                        keyReg = /(\?(.*?)=|&(.*?)=)/g,
+                        valReg = /=(.*?)&/g,
+                        urls = url ? (url + "&") : "",
+                        keys = urls.match(keyReg) || [],
+                        vals = urls.match(valReg) || [];
+                    for (var i = 0, size = keys.length; i < size; i++) {
+                        result[keys[i].replace(/(\?|=|&)/g, '')] = vals[i].replace(/(=|&)/g, '');
+                    }
+                    return result;
+                }
+
+                function getLoginInfo(callback) {
+                    // web环境
+                    if (!window.Native && !window.webkit) {
+                    return callback();
+                    }
+
+                    // APP环境
+                    if (window.Native) {
+                    var info = window.Native.getLoginInfo();
+                    info = typeof info === 'string' ? JSON.parse(info) : info;
+                    // alert('info:::' + JSON.stringify(info))
+                    return callback(info)
+                    }
+
+                    // APP的webkit环境
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.getLoginInfo) {
+                        window.webkit.messageHandlers.getLoginInfo.postMessage(null);
+                        setTimeout(function () {
+                        // alert('webkit:::' + JSON.stringify(window.loginInfo))
+                        callback(window.loginInfo);
+                        }, 10);
+                        return;
+                    }
+                }
+
+                function requireLogin(url) {
+                    if (window.Native) {
+                        return window.Native.requireLogin('');
+                    }
+                    if (window.webkit && window.webkit.messageHandlers) {
+                    return window.webkit.messageHandlers.requireLogin.postMessage(url);
+                    }
+                    console.warn('当前设置为APP环境，请在APP环境打开');
+                    console.warn(`当前处于${window.mode}站`);
+                }
+                
+                if (!window.isWeb) {
+                    // 获取登陆信息
+                    getLoginInfo(function (info) {
+                        if (!info) { return requireLogin(''); }
+                        loginInfo.partner = info.partner
+                        loginInfo.token = info.token
+                        // 需要调用接口在这里配置
+                    })
+                } else {
+                    // 从localStorage取token来获取用户基本信息
+                    console.warn('当前设置为web环境');
+                    // FIXME: 从主H5页面获取parnter
+                    // FIXME: 测试用
+                    // window.localStorage.setItem('zhixin.token', 'eyJpZCI6OTIsInRpbWUiOjE1NTk1NTA2NTAsInNpZ24iOiJhY2JiZDczNDMwN2MzYTc3ZDZlMGJiYmUzYTczZTQ2ZCJ9');
+                    window.partner = window.partner || 'zhixin'
+                    // 需要调用接口在这里配置
+                    
+                    // $.ajax({
+                    //     url: window.recordUrl[window.mode],
+                    //     success: function(res) {
+                    //         console.log(res)
+                    //         // 请求成功&有记录
+                    //         if (!res.code && res.data && res.data.length) {
+                    //             var $tbody = $('<tbody></tbody>');
+                    //             res.data.forEach(function(item) {
+                    //                 var tr = $('<tr></tr>');
+                    //                 var tableItem = {
+                    //                     name: item.name,
+                    //                     idcard: item.idno,
+                    //                     code: item.code,
+                    //                     time: item.created
+                    //                 };
+                    //                 tr.html('<td class="col-name">' + tableItem.name + '</td> <td class="col-idcard">' + tableItem.idcard + '</td> <td class="col-code">' + tableItem.code + '</td> <td class="col-time">' + tableItem.time + '</td>');
+                    //                 $tbody.append(tr);
+                    //             });
+                    //             $('.loading').eq(0).addClass('hide');
+                    //             $table.append($tbody);
+                    //             return;
+                    //         }
+                    //         // 没有数据
+                    //         if (!res.code && !res.data.length) {
+                    //             $('.loading').eq(0).addClass('hide');
+                    //             $('.load-nodata').eq(0).removeClass('hide');
+                    //             return;
+                    //         }
+                    //         // 请求失败
+                    //         if (res.code) {
+                    //             $('.loading').eq(0).addClass('hide');
+                    //             $('.load-error').eq(0).removeClass('hide');
+                    //             $('.load-error').eq(0).find('.text').eq(0).text(res.msg || '数据获取失败');
+                    //             return;
+                    //         }
+                    //     },
+                    //     fail: function(err) {
+                    //         console.error('获取智信激活记录', err)
+                    //         // alert(JSON.stringify(err))
+                    //         $('.loading').eq(0).addClass('hide');
+                    //         $('.load-error ').eq(0).removeClass('hide');
+                    //         $('.load-error').eq(0).find('.text').eq(0).text(err.msg || '数据获取失败')
+                    //     },
+                    //     headers: { "X-Api-Partner": window.partner, "X-Api-Key": localStorage.getItem(window.partner + '.token') }
+                    // })
+                }
+            })
+        </script>
+        <!-- split stop -->
+        <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+        <script src="https://cdn.bootcss.com/twitter-bootstrap/4.3.1/js/bootstrap.js"></script>
+    </body>
+</html>
